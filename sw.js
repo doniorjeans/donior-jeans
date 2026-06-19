@@ -1,10 +1,9 @@
-const CACHE = 'donior-v2';
-const BASE  = '/app';
+const CACHE = 'donior-v3';
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
-      c.addAll([BASE+'/index.html', BASE+'/manifest.json', BASE+'/icon-192.png', BASE+'/icon-512.png'])
+      c.addAll(['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'])
        .catch(()=>{})
     )
   );
@@ -20,7 +19,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
-  // Never intercept Firebase / Google API calls
   if(url.includes('firebase') || url.includes('googleapis') || url.includes('gstatic') || url.includes('cdnjs')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached ||
@@ -29,6 +27,6 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, clone));
         return res;
       })
-    ).catch(() => caches.match(BASE+'/index.html'))
+    ).catch(() => caches.match('/index.html'))
   );
 });
