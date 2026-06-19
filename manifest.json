@@ -2,26 +2,36 @@
   "name": "Donior Jeans – Business Manager",
   "short_name": "Donior Jeans",
   "description": "Donior Premium Collection Business Manager",
-  "start_url": "/app/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#080808",
   "theme_color": "#C9A84C",
   "orientation": "portrait",
   "scope": "/",
   "lang": "en",
+  "id": "donior-jeans-app",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity"]
+  "categories": ["business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Donior Jeans Business Manager"
+    }
+  ]
 }
