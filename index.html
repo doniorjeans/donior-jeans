@@ -723,8 +723,11 @@ if(!IS_LOCAL_FILE && typeof firebase !== 'undefined'){
     firebase.initializeApp(firebaseConfig);
     db   = firebase.firestore();
     auth = firebase.auth();
-    // Offline persistence — works like CapCut/Canva
-    db.enablePersistence({synchronizeTabs:true}).catch(e=>console.log('Persistence:',e.code));
+    // ========== SAVE LOGIN FOREVER ==========
+    // User stays logged in even after closing app/browser
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.log('Persistence:',e));
+    // Offline data persistence
+    db.enablePersistence({synchronizeTabs:true}).catch(e=>console.log('DB Persistence:',e.code));
   } catch(e){ console.log('Firebase init error:', e); }
 }
 
@@ -908,6 +911,7 @@ function signInGoogle(){
 
 function signOut(){
   if(auth) auth.signOut();
+  localStorage.removeItem('dj_user');
   currentUser = null;
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
@@ -921,6 +925,14 @@ async function onLogin(){
   document.getElementById('userAvatar').src = currentUser.photoURL||'https://ui-avatars.com/api/?name=DJ&background=C9A84C&color=000';
   if(isAdmin) document.getElementById('adminNav').style.display='block';
   if(!isAdmin) document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+  // Save login to localStorage for offline use
+  localStorage.setItem('dj_user', JSON.stringify({
+    email: currentUser.email,
+    displayName: currentUser.displayName,
+    photoURL: currentUser.photoURL,
+    isAdmin: isAdmin,
+    userRole: userRole
+  }));
   if(IS_LOCAL_FILE){
     const note = document.createElement('div');
     note.style.cssText='position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#8B6914;color:#000;padding:8px 16px;border-radius:20px;font-size:12px;z-index:9999;';
@@ -936,6 +948,18 @@ async function onLogin(){
 if(auth){
   auth.onAuthStateChanged(async user=>{
     if(!user){
+      // Check localStorage for saved login (works offline)
+      const saved = localStorage.getItem('dj_user');
+      if(saved){
+        try {
+          const u = JSON.parse(saved);
+          currentUser = {email:u.email, displayName:u.displayName, photoURL:u.photoURL};
+          isAdmin = u.isAdmin;
+          userRole = u.userRole||'viewer';
+          onLogin();
+          return;
+        } catch(e){}
+      }
       document.getElementById('loginScreen').style.display='flex';
       document.getElementById('appShell').style.display='none';
       return;
@@ -958,7 +982,19 @@ if(auth){
         await db.collection(COLL).doc(DOC).set({users},{merge:true});
         showAccessDenied('📨 Access request sent! Wait for admin approval.');
       }
-    } catch(e){ showAccessDenied('❌ Error: '+e.message); }
+    } catch(e){
+      // Offline — use saved login
+      const saved = localStorage.getItem('dj_user');
+      if(saved){
+        const u = JSON.parse(saved);
+        currentUser = {email:u.email, displayName:u.displayName, photoURL:u.photoURL};
+        isAdmin = u.isAdmin;
+        userRole = u.userRole||'viewer';
+        onLogin();
+      } else {
+        showAccessDenied('❌ Error: '+e.message);
+      }
+    }
   });
 }
 
